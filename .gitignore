@@ -1,5 +1,9 @@
 /target
 src/a.out
+*puml
+*.py
+*.c
+
 
 # Added by cargo
 #

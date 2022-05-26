@@ -1,9 +1,19 @@
-use std::str::from_utf8;
+use std::{ops::Index, sync::OnceState};
 
-fn main() {
-    let p2 = "sss".chars().collect::<Vec<char>>()[0];
-    // let p3 = "sss".to_string().as_ptr();
-    let p3 = "sss".as_bytes();
-    let p4 = from_utf8(p3).unwrap();
-    println!("{:?}", p4);
+fn kmp() {
+    let src = "aabba";
+    let v_src = src.chars().collect::<Vec<char>>();
+    let mut dp = vec![0; src.len() + 1];
+
+    let mut stack = Vec::new();
+    for i in 0..src.len() {
+        loop {
+            if !stack.is_empty() && v_src[stack[stack.len() - 1]] == v_src[i] {
+                stack.pop();
+            }
+        }
+        stack.push(i)
+    }
 }
+
+fn main() {}
