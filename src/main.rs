@@ -1,78 +1,48 @@
-use std::borrow::Borrow;
-use std::cell::RefCell;
+use rand;
+use std::net::UdpSocket;
 
-use std::mem::replace;
-use std::rc::Rc;
-
-use std::collections::LinkedList;
-
-
-#[derive(Debug, Clone)]
-struct Node {
-    val: i32,
-    next: Option<Rc<RefCell<Node>>>,
+struct UdpClient {
+    socket: UdpSocket,
 }
 
-type Link = Option<Rc<RefCell<Node>>>;
-type BorrowLink<'a> = Option<&'a Rc<RefCell<Node>>>;
+impl UdpClient {
+    fn new(addr: &str) -> UdpClient {
+        let socket = UdpSocket::bind(addr).unwrap();
+        UdpClient { socket: socket }
+    }
 
-impl Node {
-    fn new(val: i32) -> Self {
-        Node { val, next: None }
-    }
-    fn next(&mut self) -> Link {
-        if self.next.is_none() {
-            return None;
-        } else {
-            return self.next.clone();
-        }
-    }
-}
-fn arr_to_linked(arr: Vec<i32>) -> Link {
-    if arr.len() == 0 {
-        return None;
-    } else {
-        let head = Rc::new(RefCell::new(Node::new(arr[0])));
-        if arr.len() >= 1 {
-            (*head.borrow_mut()).next = arr_to_linked(arr[1..].to_vec());
-        }
-        Some(head)
+    fn run(&self) {
+        let msg = b"Hello, world!";
+        let rand_port = rand::thread_rng().gen_range(1..101);
+        println!("rand_port: {}", rand_port);
+        self.socket.send_to(msg, "192.168.3.104:{}" % rand_port);
     }
 }
 
-// fn merge(mut left: Link, mut right: Link) -> Link {
-//     if left.as_ref().is_none() {
-//         return right;
-//     }
-//     if right.as_ref().is_none() {
-//         return left;
-//     }
-//     // let tmp = Node::new(-1);
-//     loop {
-//         if left.unwrap().borrow().val < right.as_ref().unwrap().borrow().val {
-//             left = left.as_ref().unwrap().borrow().next.clone();
-//         }
-//     }
-//     merge(left, right)
-// }
-fn merge_sort(head: Link) {
-    if head.as_ref().is_none() {
-        return;
+struct UdpServer {
+    socket: UdpSocket,
+}
+
+impl UdpServer {
+    fn new(addr: &str) -> UdpServer {
+        let socket = UdpSocket::bind(addr).unwrap();
+        UdpServer { socket: socket }
     }
-    // let kk = head.borrow().unwrap().next.clone();
-    // let mut mid = None;
-    let mut right = head;
-    replace(None, right)
-    // unsafe {
-    //     let src = right.unwrap().as_ref().as_ptr();
-    //     replace(None, src)
-    // }
-    // replace(right.unwrap().borrow().as_ref(), right)
+
+    fn run(&self) {
+        let mut buf = [0u8; 1024];
+        let (amt, src) = self.socket.recv_from(&mut buf).unwrap();
+        println!("Received {} bytes from {}", amt, src);
+        println!("Received: {}", String::from_utf8_lossy(&buf[..amt]));
+        self.socket.send_to(&buf[..amt], src).unwrap();
+    }
 }
 
 fn main() {
-    let mut arr = vec![10, 3, 2, 4, 7, 6, 7, 8, 9, 10];
-    let mut head = arr_to_linked(arr);
-    merge_sort(head);
-    // println!("{:?}", head);
+    // let server = UdpServer::new("192.168.3.104:33700");
+    // loop {
+    //     server.run();
+    // }
+    let client = UdpClient::new("192.168.3.104:8000");
+    client.run();
 }
