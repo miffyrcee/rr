@@ -21,6 +21,7 @@ fn max_pub_sub_string() {
     // }
 }
 fn kmp() {
+
     let src = "aabba";
     let v_src = src.chars().collect::<Vec<char>>();
     let mut dp = vec![0; src.len() + 1];
@@ -35,12 +36,12 @@ fn kmp() {
             dp[i] = dp[j] + 1;
             j += 1;
         } else {
-            while dp[i] > 0 && v_src[i] != v_src[j] {
-                j = dp[j - 1];
+            while dp[j] > 0 && v_src[i] != v_src[j] {
+                j = dp[j] - 1;
             }
-            dp[i] = j
+            dp[i] = j;
         }
-        println!("{:?}", dp);
+        // println!("{:?}", dp);
     }
 }
 

@@ -1,48 +1,43 @@
-use rand;
-use std::net::UdpSocket;
-
-struct UdpClient {
-    socket: UdpSocket,
+struct Interface<'a> {
+    manager: &'a mut Manager<'a>,
 }
 
-impl UdpClient {
-    fn new(addr: &str) -> UdpClient {
-        let socket = UdpSocket::bind(addr).unwrap();
-        UdpClient { socket: socket }
-    }
-
-    fn run(&self) {
-        let msg = b"Hello, world!";
-        let rand_port = rand::thread_rng().gen_range(1..101);
-        println!("rand_port: {}", rand_port);
-        self.socket.send_to(msg, "192.168.3.104:{}" % rand_port);
+impl<'a> Interface<'a> {
+    pub fn noop(self) {
+        println!("interface consumed");
     }
 }
 
-struct UdpServer {
-    socket: UdpSocket,
+struct Manager<'a> {
+    text: &'a str,
 }
 
-impl UdpServer {
-    fn new(addr: &str) -> UdpServer {
-        let socket = UdpSocket::bind(addr).unwrap();
-        UdpServer { socket: socket }
-    }
+struct List<'a> {
+    manager: Manager<'a>,
+}
 
-    fn run(&self) {
-        let mut buf = [0u8; 1024];
-        let (amt, src) = self.socket.recv_from(&mut buf).unwrap();
-        println!("Received {} bytes from {}", amt, src);
-        println!("Received: {}", String::from_utf8_lossy(&buf[..amt]));
-        self.socket.send_to(&buf[..amt], src).unwrap();
+impl<'a> List<'a> {
+    pub fn get_interface(&'a mut self) -> Interface {
+        Interface {
+            manager: &mut self.manager,
+        }
     }
 }
 
 fn main() {
-    // let server = UdpServer::new("192.168.3.104:33700");
-    // loop {
-    //     server.run();
-    // }
-    let client = UdpClient::new("192.168.3.104:8000");
-    client.run();
+    let mut list = List {
+        manager: Manager { text: "hello" },
+    };
+
+    list.get_interface().noop();
+
+    println!("Interface should be dropped here and the borrow released");
+
+    // 下面的调用会失败，因为同时有不可变/可变借用
+    // 但是Interface在之前调用完成后就应该被释放了
+    use_list(&list);
+}
+
+fn use_list(list: &mut List) {
+    println!("{}", list.manager.text);
 }
