@@ -44,4 +44,3 @@ fn main() {
 fn use_list(list: &List) {
     println!("{}", list.manager.text);
 }
-
